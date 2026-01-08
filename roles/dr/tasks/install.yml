@@ -1,0 +1,4 @@
+- name: Install pgBackRest
+  dnf:
+    name: pgbackrest
+    state: present
