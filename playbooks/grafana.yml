@@ -1,0 +1,5 @@
+- name: Install Grafana on monitoring server
+  hosts: monitoring
+  become: true
+  roles:
+    - grafana

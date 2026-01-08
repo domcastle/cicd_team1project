@@ -35,11 +35,20 @@
   roles:
     - ai_processing
 
-- name: Monitoring
+- name: Baseline (optional)
+  hosts: all
+  become: true
+  roles:
+    - node_exporter
+    - promtail  
+
+- name: Monitoring stack
   hosts: monitoring
   become: true
   roles:
-    - monitoring
+    - prometheus
+    - loki
+    - grafana
 
 - name: DR / Backup
   hosts: dr

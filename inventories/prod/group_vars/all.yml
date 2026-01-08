@@ -1,0 +1,17 @@
+prometheus_version: "3.5.0"
+prometheus_listen: "0.0.0.0:9090"
+
+service_scrape_definitions:
+  - job_name: "node_exporter"
+    port: 9100
+    groups: ["all"]
+
+grafana_enable_dashboard_provisioning: true
+grafana_dashboards_path: /var/lib/grafana/dashboards
+
+# ===== Grafana Datasource URLs (추가 권장) =====
+grafana_prometheus_url: "http://172.16.6.57:9090"
+grafana_loki_url: "http://172.16.6.57:3100"
+
+# promtail이 로그를 푸시할 Loki 주소
+promtail_loki_push_url: "http://172.16.6.57:3100/loki/api/v1/push"
