@@ -1,0 +1,52 @@
+# roles/haproxy_pgsql/templates/haproxy.cfg.j2
+
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    daemon
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    timeout connect 5s
+    timeout client  1m
+    timeout server  1m
+
+frontend pg_write
+    bind *:{{ pgsql_write_port }}
+    mode tcp
+    default_backend pg_leader
+
+frontend pg_read
+    bind *:{{ pgsql_read_port }}
+    mode tcp
+    default_backend pg_replica
+
+backend pg_leader
+    mode tcp
+    option tcp-check
+
+    tcp-check connect
+    tcp-check send GET\ /leader\ HTTP/1.1\r\n
+    tcp-check send Host:\ localhost\r\n\r\n
+    tcp-check expect string 200
+
+{% for db in pgsql_backends %}
+    server {{ db.name }} {{ db.ip }}:{{ db.pg_port }} check port {{ patroni_rest_port }}
+{% endfor %}
+
+backend pg_replica
+    mode tcp
+    option tcp-check
+
+    tcp-check connect
+    tcp-check send GET\ /replica\ HTTP/1.1\r\n
+    tcp-check send Host:\ localhost\r\n\r\n
+    tcp-check expect string 200
+
+{% for db in pgsql_backends %}
+    server {{ db.name }} {{ db.ip }}:{{ db.pg_port }} check port {{ patroni_rest_port }}
+{% endfor %}
+
+

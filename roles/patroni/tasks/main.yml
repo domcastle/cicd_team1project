@@ -1,0 +1,59 @@
+---
+- name: Install Patroni runtime dependencies
+  dnf:
+    name:
+      - python3-pip
+      - python3-psycopg2
+    state: present
+
+- name: Install patroni with etcd support
+  pip:
+    name:
+      - patroni[etcd]
+      - psycopg2-binary
+    state: present
+
+- name: Create Patroni config directory
+  file:
+    path: /etc/patroni
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Deploy Patroni configuration
+  template:
+    src: patroni.yml.j2
+    dest: /etc/patroni/patroni.yml
+    owner: postgres
+    group: postgres
+    mode: '0644'
+  notify: Restart patroni
+
+- name: Create systemd unit for Patroni
+  copy:
+    dest: /etc/systemd/system/patroni.service
+    content: |
+      [Unit]
+      Description=Patroni PostgreSQL HA
+      After=network.target
+
+      [Service]
+      User=postgres
+      Group=postgres
+      ExecStart=/usr/local/bin/patroni /etc/patroni/patroni.yml
+      Restart=always
+      LimitNOFILE=10240
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start Patroni
+  systemd:
+    name: patroni
+    enabled: yes
+    state: started

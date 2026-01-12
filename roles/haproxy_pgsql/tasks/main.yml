@@ -1,0 +1,26 @@
+---
+# roles/haproxy_pgsql/tasks/main.yml
+
+- name: install haproxy (CentOS)
+  dnf:
+    name: haproxy
+    state: present
+
+- name: deploy haproxy config for postgresql
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart haproxy
+
+- name: reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: enable and start haproxy
+  systemd:
+    name: haproxy.service
+    enabled: yes
+    state: started

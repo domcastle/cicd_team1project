@@ -1,0 +1,32 @@
+---
+# roles/keepalived/tasks/main.yml
+
+- name: install epel-release (CentOS)
+  dnf:
+    name: epel-release
+    state: present
+
+- name: install keepalived
+  dnf:
+    name: keepalived
+    state: present
+
+- name: deploy keepalived config
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart keepalived
+
+- name: reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: enable and start keepalived
+  systemd:
+    name: keepalived
+    enabled: yes
+    state: started
+

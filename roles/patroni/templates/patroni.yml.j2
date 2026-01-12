@@ -1,0 +1,75 @@
+scope: pgsql-cluster
+namespace: /patroni/
+name: {{ inventory_hostname }}
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: {{ ansible_host }}:8008
+
+# =========================
+# DCS (etcd v3) – 최상위!!
+# =========================
+etcd3:
+  hosts:
+    - 10.1.5.10:2379
+    - 10.1.5.20:2379
+    - 10.1.5.30:2379
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      parameters:
+        wal_level: replica
+        hot_standby: "on"
+        max_wal_senders: 10
+        max_replication_slots: 10
+
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+  users:
+    postgres:
+      password: postgres
+      options:
+        - superuser
+        - createdb
+
+    replicator:
+      password: {{ replication_user.password }}
+      options:
+        - replication
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: {{ ansible_host }}:5432
+
+  data_dir: /var/lib/pgsql/15/data
+  bin_dir: /usr/pgsql-15/bin
+
+  authentication:
+    superuser:
+      username: {{ postgresql_superuser.username }}
+      password: {{ postgresql_superuser.password }}
+
+    replication:
+      username: {{ replication_user.username }}
+      password: {{ replication_user.password }}
+
+  pg_hba:
+{% for rule in patroni_pg_hba %}
+    - {{ rule | tojson }}
+{% endfor %}
+
+  parameters:
+    unix_socket_directories: "/var/run/postgresql"
+    wal_level: replica
+    hot_standby: "on"
+    max_wal_senders: 10
+    max_replication_slots: 10
+

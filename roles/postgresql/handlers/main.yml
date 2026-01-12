@@ -1,0 +1,7 @@
+---
+# roles/postgresql/handlers/main.yml
+
+- name: reload postgresql
+  systemd:
+    name: postgresql-15
+    state: reloaded

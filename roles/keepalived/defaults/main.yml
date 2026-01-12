@@ -1,0 +1,15 @@
+---
+# roles/keepalived/defaults/main.yml
+
+keepalived_interface: ens192
+keepalived_vip: 10.1.1.40
+keepalived_virtual_router_id: 51
+
+keepalived_auth_type: PASS
+keepalived_auth_pass: 1111
+
+keepalived_advert_int: 1
+
+# haproxy check
+keepalived_check_interval: 2
+keepalived_check_weight: 2

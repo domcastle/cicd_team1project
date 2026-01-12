@@ -1,0 +1,7 @@
+---
+# roles/etcd/handlers/main.yml
+
+- name: restart etcd
+  systemd:
+    name: etcd
+    state: restarted

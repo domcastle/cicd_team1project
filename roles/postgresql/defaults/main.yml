@@ -1,0 +1,15 @@
+---
+# roles/postgresql/defaults/main.yml
+
+pg_version: 15
+
+pg_user: postgres
+pg_group: postgres
+
+pg_data_dir: /var/lib/pgsql/15/data
+pg_bin_dir: /usr/pgsql-15/bin
+
+pg_port: 5432
+
+# versionlock 사용 여부
+pg_versionlock: true

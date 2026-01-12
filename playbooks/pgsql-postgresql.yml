@@ -1,0 +1,8 @@
+# playbooks/pgsql-postgresql.yml
+---
+- name: Install PostgreSQL 15 (for Patroni)
+  hosts: pgsql_db
+  become: true
+
+  roles:
+    - postgresql

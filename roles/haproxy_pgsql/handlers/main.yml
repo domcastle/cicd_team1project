@@ -1,0 +1,7 @@
+---
+# roles/haproxy_pgsql/handlers/main.yml
+
+- name: restart haproxy
+  systemd:
+    name: haproxy
+    state: restarted

@@ -1,0 +1,18 @@
+name: {{ inventory_hostname }}
+
+data-dir: {{ etcd_data_dir }}
+
+listen-peer-urls: http://{{ ansible_host }}:2380
+initial-advertise-peer-urls: http://{{ ansible_host }}:2380
+
+listen-client-urls: http://{{ ansible_host }}:2379,http://127.0.0.1:2379
+advertise-client-urls: http://{{ ansible_host }}:2379
+
+initial-cluster-token: {{ etcd_cluster_name }}
+initial-cluster-state: new
+
+initial-cluster: {{ groups['pgsql_db']
+  | map('extract', hostvars, 'inventory_hostname')
+  | zip(groups['pgsql_db'] | map('extract', hostvars, 'ansible_host'))
+  | map('join', '=http://')
+  | join(':2380,') }}:2380

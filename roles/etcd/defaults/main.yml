@@ -1,0 +1,15 @@
+---
+# roles/etcd/defaults/main.yml
+
+etcd_version: "3.5.15"
+
+etcd_cluster_name: pgsql-cluster
+
+etcd_client_port: 2379
+etcd_peer_port: 2380
+
+etcd_data_dir: /var/lib/etcd
+etcd_install_dir: /usr/local/bin
+
+# DB 서버 인터페이스
+etcd_interface: ens160

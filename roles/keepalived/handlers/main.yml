@@ -1,0 +1,7 @@
+---
+# roles/keepalived/handlers/main.yml
+
+- name: restart keepalived
+  systemd:
+    name: keepalived
+    state: restarted

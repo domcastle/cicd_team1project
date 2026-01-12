@@ -1,0 +1,22 @@
+# roles/haproxy_pgsql/defaults/main.yml
+
+# roles/haproxy_pgsql/defaults/main.yml
+
+# PostgreSQL HAProxy Ports
+pgsql_write_port: 5432
+pgsql_read_port: 5433
+
+# Patroni REST API Port
+patroni_rest_port: 8008
+
+# PostgreSQL Nodes
+pgsql_backends:
+  - name: dba
+    ip: 10.1.5.10
+    pg_port: 5432
+  - name: dbs
+    ip: 10.1.5.20
+    pg_port: 5432
+  - name: dbb
+    ip: 10.1.5.30
+    pg_port: 5432

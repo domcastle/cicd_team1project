@@ -1,0 +1,60 @@
+---
+############################################
+# 1. 기본 postgresql 모듈 비활성화
+############################################
+- name: Disable default postgresql module
+  command: dnf -y module disable postgresql
+  changed_when: false
+
+############################################
+# 2. PGDG repo 직접 생성 (EL9 / PostgreSQL 15)
+############################################
+- name: Create PGDG PostgreSQL 15 repo
+  copy:
+    dest: /etc/yum.repos.d/pgdg15.repo
+    mode: '0644'
+    content: |
+      [pgdg15]
+      name=PostgreSQL 15 for RHEL/CentOS 9
+      baseurl=https://download.postgresql.org/pub/repos/yum/15/redhat/rhel-9-x86_64
+      enabled=1
+      gpgcheck=0
+
+############################################
+# 3. DNF 캐시 갱신
+############################################
+- name: Rebuild dnf cache
+  command: dnf makecache
+  changed_when: false
+
+############################################
+# 4. PostgreSQL 15 설치
+############################################
+- name: Install PostgreSQL 15 packages
+  dnf:
+    name:
+      - postgresql15
+      - postgresql15-server
+      - postgresql15-contrib
+    state: present
+
+############################################
+# 5. Patroni 사용 → 서비스 비활성
+############################################
+- name: Disable postgresql service (managed by Patroni)
+  systemd:
+    name: postgresql-15
+    enabled: false
+    state: stopped
+  ignore_errors: true
+
+############################################
+# 6. 데이터 디렉토리 준비
+############################################
+- name: Ensure PostgreSQL data directory exists
+  file:
+    path: /var/lib/pgsql/15/data
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
