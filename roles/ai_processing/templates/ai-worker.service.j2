@@ -1,12 +1,21 @@
 [Unit]
-Description=AI Redis Worker
+Description=AI Video Processing Worker
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/ai/redis_worker.py
-Restart=always
+Type=simple
 User=ansible
+Group=ansible
 WorkingDirectory=/opt/ai
+Environment=REDIS_HOST=10.1.1.10
+Environment=REDIS_PORT=6379
+Environment=MINIO_ENDPOINT=10.1.1.50:9000
+Environment=MINIO_BUCKET=videos
+Environment=MINIO_ACCESS_KEY=justicadmin
+Environment=MINIO_SECRET_KEY=justicadmin123
+ExecStart=/usr/bin/python3 /opt/ai/worker.py
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

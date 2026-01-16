@@ -1,7 +1,9 @@
+# AI directories
 ai_base_dir: /opt/ai
 ai_jobs_dir: /opt/ai/jobs
 ai_output_dir: /opt/ai/output
 
-redis_host: localhost
+# Redis (기본값 – 로컬 테스트용)
+redis_host: 127.0.0.1
 redis_port: 6379
 redis_password: ""

@@ -1,10 +1,137 @@
-# roles/ai_processing/tasks/main.yml
+---
+###############################################################################
+# 0. 변수 (role 기본값)
+###############################################################################
+- name: Set AI worker vars
+  set_fact:
+    ai_user: ansible
+    ai_group: ansible
+    ai_base_dir: /opt/ai
+    ai_scripts_dir: /opt/ai/scripts
+    ai_output_dir: /opt/ai/output
 
-- import_tasks: layout.yml     # 1️⃣ 디렉터리/권한 (기초)
-- import_tasks: runtime.yml    # 2️⃣ 기본 런타임 패키지
-- import_tasks: ffmpeg.yml     # 3️⃣ FFmpeg
-- import_tasks: tts.yml        # 4️⃣ TTS
-- import_tasks: scripts.yml    # 5️⃣ 실행 스크립트
-- import_tasks: cleanup.yml    # 6️⃣ 정리/cron
-- import_tasks: worker.yml
-- import_tasks: deps.yml
+
+###############################################################################
+# 1. Cleanup / 유지보수
+###############################################################################
+- name: Deploy AI cleanup script
+  template:
+    src: cleanup_ai.sh.j2
+    dest: /usr/local/bin/cleanup_ai.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Register AI cleanup cron
+  cron:
+    name: "AI temp cleanup"
+    job: "/usr/local/bin/cleanup_ai.sh >> /var/log/ai_cleanup.log 2>&1"
+    minute: "0"
+    hour: "3"
+
+
+###############################################################################
+# 2. 기본 패키지
+###############################################################################
+- name: Install base system packages
+  dnf:
+    name:
+      - git
+      - curl
+      - wget
+      - unzip
+      - python3
+      - python3-pip
+      - python3-devel
+      - gcc
+    state: present
+
+
+###############################################################################
+# 3. Python 패키지 (중요)
+###############################################################################
+- name: Install Python packages for AI worker
+  pip:
+    name:
+      - redis
+      - minio
+    executable: pip3
+
+
+###############################################################################
+# 4. FFmpeg 설치
+###############################################################################
+- name: Enable RPM Fusion free
+  dnf:
+    name: https://download1.rpmfusion.org/free/el/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm
+    state: present
+
+- name: Install FFmpeg
+  dnf:
+    name: ffmpeg
+    state: present
+    allowerasing: true
+
+
+###############################################################################
+# 5. 디렉토리 레이아웃
+###############################################################################
+- name: Create AI directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ai_user }}"
+    group: "{{ ai_group }}"
+    mode: "0755"
+  loop:
+    - "{{ ai_base_dir }}"
+    - "{{ ai_scripts_dir }}"
+    - "{{ ai_output_dir }}"
+    - "{{ ai_base_dir }}/logs"
+    - "{{ ai_base_dir }}/status"
+
+
+###############################################################################
+# 6. 실행 스크립트 (FFmpeg)
+###############################################################################
+- name: Deploy FFmpeg Shorts script
+  template:
+    src: run_ffmpeg_shorts.sh.j2
+    dest: "{{ ai_scripts_dir }}/run_ffmpeg_shorts.sh"
+    owner: "{{ ai_user }}"
+    group: "{{ ai_group }}"
+    mode: "0755"
+
+
+###############################################################################
+# 7. Redis Worker 코드
+###############################################################################
+- name: Deploy AI worker python script
+  template:
+    src: worker.py.j2
+    dest: "{{ ai_base_dir }}/worker.py"
+    owner: "{{ ai_user }}"
+    group: "{{ ai_group }}"
+    mode: "0755"
+
+
+###############################################################################
+# 8. systemd 서비스
+###############################################################################
+- name: Deploy ai-worker systemd service
+  template:
+    src: ai-worker.service.j2
+    dest: /etc/systemd/system/ai-worker.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start ai-worker
+  systemd:
+    name: ai-worker
+    enabled: yes
+    state: restarted

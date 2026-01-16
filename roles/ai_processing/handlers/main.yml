@@ -1,0 +1,4 @@
+- name: Restart ai-worker
+  service:
+    name: ai-worker
+    state: restarted

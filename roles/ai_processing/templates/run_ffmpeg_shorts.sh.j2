@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+INPUT="$1"
+OUTPUT="$2"
+
+if [ ! -f "$INPUT" ]; then
+  echo "[ERROR] Input file not found: $INPUT"
+  exit 1
+fi
+
+# YouTube Shorts 기준
+# - 9:16
+# - max 60s
+# - 중앙 크롭
+# - 모바일 최적화
+ffmpeg -y \
+  -i "$INPUT" \
+  -t 60 \
+  -vf "
+    scale=ih*9/16:ih,
+    crop=ih*9/16:ih,
+    scale=1080:1920
+  " \
+  -r 30 \
+  -c:v libx264 \
+  -profile:v high \
+  -level 4.2 \
+  -pix_fmt yuv420p \
+  -preset veryfast \
+  -movflags +faststart \
+  -an \
+  "$OUTPUT"
+
+echo "[OK] Shorts video created: $OUTPUT"
