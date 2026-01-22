@@ -58,7 +58,7 @@
   roles:
     - postgresql
 
-# pgsql-postgresql.yml
+# pgsql-patroni.yml
 - name: Deploy Patroni PostgreSQL Cluster
   hosts: pgsql_db
   become: yes
@@ -71,7 +71,28 @@
   become: true
   roles:
     - etcd
-  
+
+# ansible/playbooks/pgbackrest-client.yml
+
+- name: Install pgBackRest client on DB servers
+  hosts: pgsql_db
+  become: true
+  roles:
+    - pgbackrest_client
+
+# playbooks/pgsql-ai.yml
+
+- hosts: pgsql_leader
+  become: true
+  roles:
+    - postgres_ai
+
+# playbooks/pgsql-oauth.yml
+
+- hosts: pgsql_leader
+  become: true
+  roles:
+    - postgres_oauth
 
 
 ######################################################
@@ -111,6 +132,14 @@
   become: true
   roles:
     - dr_ha
+
+- name: DR Web + VIP Failover (keepalived)
+  hosts: dr_ha
+  become: true
+  roles:
+    - dr_web_static
+    - dr_keepalived
+
 ########################################
 # 1. Repo 서버 기본 준비
 ########################################

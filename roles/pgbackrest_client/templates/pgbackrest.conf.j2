@@ -3,5 +3,11 @@ repo1-host={{ pgbackrest_repo_internal_ip }}
 repo1-host-user=postgres
 process-max=4
 
+# log to file (for Loki/promtail)
+log-level-file=detail
+log-level-console=info
+log-path=/var/log/pgbackrest
+
+
 [{{ stanza_name }}]
 pg1-path={{ pg_data_dir }}
