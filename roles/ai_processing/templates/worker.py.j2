@@ -33,6 +33,7 @@ minio = Minio(
     secure=False,
 )
 
+
 def download_object(bucket, key, dst):
     obj = minio.get_object(bucket, key)
     with open(dst, "wb") as f:
@@ -41,30 +42,42 @@ def download_object(bucket, key, dst):
     obj.close()
     obj.release_conn()
 
+
 def upload_object(bucket, key, src):
     minio.fput_object(bucket, key, src, content_type="video/mp4")
+
 
 def process_job(job: dict):
     input_key = job["input_key"]
     output_key = job["output_key"]
 
+    # 🔑 핵심: variant (기본 v1)
+    variant = job.get("variant", "v1")
+
     tmp_input = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
     tmp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
 
     try:
+        # 1️⃣ 원본 다운로드
         download_object(MINIO_BUCKET, input_key, tmp_input)
+
+        # 2️⃣ LLM 자막 생성 (variant 전달)
+        env = os.environ.copy()
+        env["CAPTION_VARIANT"] = variant
 
         caption = subprocess.check_output(
             ["python3", CAPTION_SCRIPT, tmp_input],
             text=True,
             timeout=600,
+            env=env,              # 👈 여기 중요
         ).strip()
 
         if not caption:
             caption = "편집된 영상입니다"
 
-        print("📝 caption =", caption)
+        print(f"📝 caption ({variant}) =", caption)
 
+        # 3️⃣ ffmpeg 편집
         subprocess.run(
             [
                 FFMPEG_SCRIPT,
@@ -77,12 +90,14 @@ def process_job(job: dict):
             check=True,
         )
 
+        # 4️⃣ 결과 업로드
         upload_object(MINIO_BUCKET, output_key, tmp_output)
 
     finally:
         for f in (tmp_input, tmp_output):
             if os.path.exists(f):
                 os.remove(f)
+
 
 def main():
     print("🚀 AI Worker started")
@@ -95,6 +110,7 @@ def main():
         except Exception as e:
             print("❌ job failed:", e)
         time.sleep(0.5)
+
 
 if __name__ == "__main__":
     main()
